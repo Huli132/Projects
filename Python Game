@@ -1,0 +1,234 @@
+''' 1. Se creeaza feresatra principala a jocului.
+       Culoare: R 0-255
+                G 0-255
+                B 0-255
+    2. Vom crea bucla principala a jocului,
+       fereastra va fi afisata in mod repetat, continuu.
+    3. Vom crea un eveniment de tip QUIT, in urma caruia
+       jocul se va termina.
+    4. Vom crea un "ceas" (clock) care sa determine de cate
+       ore pe secunda se capteaza evenimentele.
+    5. Vom adauga in fereastra jocului obiectele:
+       - jucatori (personajele pozitive)
+       - inamici (personajele negative)
+       - bonusuri (comori, tresures, puncte etc.)
+       - pedepse (pierderi de puncte, vieti etc.)
+       - sunete
+'''
+import pygame
+from pygame import mixer
+import random
+
+pygame.init()
+
+# Vom crea fereastra jocului
+W = 800 # Latimea (Width) ferestrei
+H = 600 # Inaltimea (Height) ferestrei
+alb = (255, 255, 255) # variabila de tip tuplu
+negru = (0, 0, 0)
+rosu = (255, 0, 0)
+verde = (0, 255, 0)
+albastru = (0, 0, 255)
+
+
+# Adaugam texte
+nr_vieti = 5
+font = pygame.font.Font('arial.ttf', 64)
+terminat = font.render("GAME OVER!!!", True, (255,100,100))
+font = pygame.font.Font("arial.ttf", 32)
+vieti = font.render("Vieti: "+str(nr_vieti), True, (0,0,255))
+
+
+# Adaugam titlul si iconita jocului (ferestrei)
+pygame.display.set_caption("Aliens Invasion >>> Copyright 2022")
+imagine = pygame.image.load("imagine_iconita.png")
+pygame.display.set_icon(imagine)
+
+# Adaugam sunet de fundal
+mixer.music.load("sunet_fundal.wav")
+#mixer.music.play(-1)
+
+# Adaugam sunete glont, explozie
+tip_arma =1 
+sunet_glont1 = mixer.Sound("sunet_glont1.mp3")
+sunet_glont2 = mixer.Sound("sunet_glont2.mp3")
+sunet_glont3 = mixer.Sound("sunet_glont3.mp3")
+sunet_explozie = mixer.Sound("sunet_explozie.wav")
+
+# Vom crea un clock
+clock = pygame.time.Clock()
+
+# Vom adauga variabile pentru ciocniri (coliziuni)
+coliziune1 = False
+coliziune2 = False
+coliziune3 = False
+
+# Vom adauga inamicii
+x_inamic1 = random.randint(0, W)
+y_inamic1 = random.randint(30, 250)
+viteza_inamic1 = 3
+directie_x_inamic1 = -1
+directie_y_inamic1 = 0
+imagine = pygame.image.load("imagine_inamic1.png")
+inamic1 = pygame.transform.scale(imagine,(50, 50))
+
+x_inamic2 = random.randint(0, W)
+y_inamic2 = random.randint(30, 250)
+viteza_inamic2 = 3
+directie_x_inamic2 = +1
+directie_y_inamic2 = 0
+imagine = pygame.image.load("imagine_inamic2.png")
+inamic2 = pygame.transform.scale(imagine,(50, 50))
+
+x_inamic3 = random.randint(0, W)
+y_inamic3 = random.randint(30, 250)
+viteza_inamic3 = 3
+directie_x_inamic3 = -1
+directie_y_inamic3 = 0
+imagine = pygame.image.load("imagine_inamic3.png")
+inamic3 = pygame.transform.scale(imagine,(50, 50))
+
+# Vom adauga jucatorii
+x_jucator = 200
+y_jucator = 525
+viteza_jucator = 3
+directie_x_jucator = 0
+directie_y_jucator= 0
+imagine = pygame.image.load("imagine_jucator1.png")
+jucator = pygame.transform.scale(imagine,(50, 50))
+
+# Vom adauga imaginea de fundal
+imagine = pygame.image.load("imagine_fundal.png")
+fundal = pygame.transform.scale(imagine,(W, H))
+# Vom crea o variabila de tip fereastra
+ecran = pygame.display.set_mode((W,H))
+def Ruleaza():
+    global x_inamic1, y_inamic1, viteza_inamic1, directie_x_inamic1, directie_y_inamic1
+    global x_inamic2, y_inamic2, viteza_inamic2, directie_x_inamic2, directie_y_inamic2
+    global x_inamic3, y_inamic3, viteza_inamic3, directie_x_inamic3, directie_y_inamic3
+    global x_jucator, y_jucator, viteza_jucator, directie_x_jucator, directie_y_jucator
+    global tip_arma, nr_vieti, vieti
+    while True:
+        # Variabila events capteaza (culege) evenimentele
+        # generate de utilizator: taste, mouse etc.  
+        events = pygame.event.get()
+        for event in events:
+            if event.type==pygame.QUIT:# QUIT = Alt+F4, click pe x din dreapta sus etc.
+                return
+            elif event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_UP:
+                    directie_y_inamic1 = -1 # sus
+                elif event.key==pygame.K_DOWN:
+                    directie_y_inamic1 = +1 # jos
+                elif event.key==pygame.K_LEFT:
+                    directie_x_inamic1 = -1 #stanga
+                elif event.key==pygame.K_RIGHT:
+                    directie_x_inamic1 = +1 # dreapta
+                elif event.key==pygame.K_w:
+                    directie_y_jucator = -1 # sus
+                elif event.key==pygame.K_s:
+                    directie_y_jucator = +1 # jos
+                elif event.key==pygame.K_a:
+                    directie_x_jucator = -1 #stanga
+                elif event.key==pygame.K_d:
+                    directie_x_jucator = +1 # dreapta
+                elif event.key == pygame.K_1:
+                    tip_arma = 1
+                elif event.key == pygame.K_2:
+                    tip_arma = 2
+                elif event.key == pygame.K_3:
+                    tip_arma = 3
+                elif event.key == pygame.K_SPACE:
+                    if tip_arma == 1:
+                        sunet_glont1.play()
+                    elif tip_arma == 2:
+                        sunet_glont2.play()
+                    elif tip_arma == 3:
+                        sunet_glont3.play()
+            elif event.type==pygame.KEYUP:
+                if event.key==pygame.K_UP:
+                    directie_y_inamic1 = 0 # repaus
+                elif event.key==pygame.K_DOWN:
+                    directie_y_inamic1 = 0 # repaus
+                elif event.key==pygame.K_LEFT:
+                    directie_x_inamic1 = 0 # repaus
+                elif event.key==pygame.K_RIGHT:
+                    directie_x_inamic1 = 0 # repaus
+                elif event.key==pygame.K_w:
+                    directie_y_jucator = 0 # repaus
+                elif event.key==pygame.K_s:
+                    directie_y_jucator = 0 # repaus
+                elif event.key==pygame.K_a:
+                    directie_x_jucator = 0 # repaus
+                elif event.key==pygame.K_d:
+                    directie_x_jucator = 0 # repaus
+        x_inamic1 = x_inamic1 + directie_x_inamic1 * viteza_inamic1
+        y_inamic1 = y_inamic1 + directie_y_inamic1 * viteza_inamic1
+        x_jucator = x_jucator + directie_x_jucator * viteza_jucator
+        y_jucator = y_jucator + directie_y_jucator * viteza_jucator
+
+
+
+        #-------------------------------------------------------------
+        if x_inamic1 <= 0:
+            directie_x_inamic1 = -directie_x_inamic1
+        elif x_inamic1 >= W -50:
+            directie_x_inamic1 = -directie_x_inamic1
+        x_inamic1 = x_inamic1 + directie_x_inamic1 * viteza_inamic1
+        #-------------------------------------------------------------
+        if x_inamic2 <= 0:
+            directie_x_inamic2 = -directie_x_inamic2
+        elif x_inamic2 >= W -50:
+            directie_x_inamic2 = -directie_x_inamic2
+        x_inamic2 = x_inamic2 + directie_x_inamic2 * viteza_inamic2
+        #-------------------------------------------------------------
+        if x_inamic3 <= 0:
+            directie_x_inamic3 = -directie_x_inamic3
+        elif x_inamic3 >= W -50:
+            directie_x_inamic3 = -directie_x_inamic3
+        x_inamic3 = x_inamic3 + directie_x_inamic3 * viteza_inamic3
+        #-------------------------------------------------------------
+        if abs(x_jucator-x_inamic1)<=50 and abs(y_jucator-y_inamic1)<=50:
+            coliziune1=True
+        else:
+            coliziune1=False
+        if coliziune1==True:
+            nr_vieti = nr_vieti - 1
+            vieti = font.render("Vieti: "+str(nr_vieti), True, (0,0,255))
+            sunet_explozie.play()
+            #if nr_vieti == 0:
+                #return
+        #-------------------------------------------------------------
+        if abs(x_jucator-x_inamic2)<=50 and abs(y_jucator-y_inamic2)<=50:
+            coliziune2=True
+        else:
+            coliziune2=False
+        if coliziune2==True:
+            nr_vieti = nr_vieti - 1
+            vieti = font.render("Vieti: "+str(nr_vieti), True, (0,0,255))
+            sunet_explozie.play()
+            #if nr_vieti == 0:
+                #return
+        #-------------------------------------------------------------
+        if abs(x_jucator-x_inamic3)<=50 and abs(y_jucator-y_inamic3)<=50:
+            coliziune3=True
+        else:
+            coliziune3=False
+        if coliziune3==True:
+            nr_vieti = nr_vieti - 1
+            vieti = font.render("Vieti: "+str(nr_vieti), True, (0,0,255))
+            sunet_explozie.play()
+            #if nr_vieti == 0:
+                #return
+        #-------------------------------------------------------------
+        #ecran.fill(albastru)
+        ecran.blit(fundal,(0,0))
+        ecran.blit(jucator,(x_jucator,y_jucator))
+        ecran.blit(inamic1,(x_inamic1,y_inamic1))
+        ecran.blit(inamic2,(x_inamic2,y_inamic2))
+        ecran.blit(inamic3,(x_inamic3,y_inamic3))
+        ecran.blit(vieti,(W-100,10))
+        pygame.display.update() # Se afiseaza fereastra
+        clock.tick(60)
+Ruleaza()
+pygame.quit()
